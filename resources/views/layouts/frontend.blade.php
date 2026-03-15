@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Resort Pro')</title>
 
-    {{-- Anti-flash: chạy TRƯỚC khi render, tránh nháy sáng/tối --}}
+    {{-- Theme Anti-flash: Prevents FOUC (Flash of Unstyled Content) during initial load --}}
     <script>
     (function(){
         var s=localStorage.getItem('resort-theme'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;
@@ -88,7 +88,7 @@
                 </button>
 
                 @auth
-                    {{-- User Dropdown Liên Kết Breeze --}}
+                    {{-- User Profile Dropdown (Linked with Laravel Breeze) --}}
                     <div class="relative" id="userMenuWrap">
                         <button id="userMenuBtn" class="nav-border flex items-center gap-2 px-3 py-1.5 rounded-full border hover:border-amber-400 transition-all duration-200">
                             <span class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -123,7 +123,7 @@
                         </div>
                     </div>
                 @else
-                    <a href="{{ route('login') }}" class="nav-login px-4 py-2 rounded-lg border transition-all duration-200">Đăng nhập</a>
+                    <a href="{{ route('login', ['redirect_to' => request()->fullUrl()]) }}" class="nav-login px-4 py-2 rounded-lg border transition-all duration-200">Đăng nhập</a>
                 @endauth
             </div>
 
@@ -171,7 +171,7 @@
                         </button>
                     </form>
                 @else
-                    <a href="{{ route('login') }}" class="nav-login mt-1 text-sm font-semibold px-3 py-2.5 rounded-lg border text-center transition-all">Đăng nhập</a>
+                    <a href="{{ route('login', ['redirect_to' => request()->fullUrl()]) }}" class="nav-login mt-1 text-sm font-semibold px-3 py-2.5 rounded-lg border text-center transition-all">Đăng nhập</a>
                 @endauth
             </div>
         </div>
@@ -214,7 +214,7 @@
             if(!localStorage.getItem('resort-theme')) applyTheme(e.matches);
         });
 
-        // Xử lý Date Session Storage
+        // Date Input Constraints & Preview Logic
         function todayISO(){
             var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         }
@@ -267,7 +267,7 @@
         initDateGuard();
         setTimeout(initDateGuard, 400);
 
-        // Xử lý User Dropdown
+        // Desktop User Menu Toggle
         var userMenuBtn = document.getElementById('userMenuBtn');
         var userMenu    = document.getElementById('userMenu');
         var userChevron = document.getElementById('userChevron');
@@ -287,7 +287,7 @@
             userMenu.addEventListener('click', function(e){ e.stopPropagation(); });
         }
 
-        // Xử lý Mobile Menu
+        // Mobile Navigation Toggle
         var menuBtn = document.getElementById('menuBtn');
         var mobileMenu = document.getElementById('mobileMenu');
         var iconBurger = document.getElementById('iconBurger');
