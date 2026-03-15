@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up() {
-        // 1. Rooms (Đã nâng cấp V2: Quản lý dọn dẹp và AI lock)
+        // 1. Rooms
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->foreignId('zone_id')->constrained('zones')->onDelete('cascade');

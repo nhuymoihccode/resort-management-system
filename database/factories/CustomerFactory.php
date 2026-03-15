@@ -4,16 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Customer>
- */
 class CustomerFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $spent = fake()->numberBetween(0, 100000000);
@@ -41,7 +33,7 @@ class CustomerFactory extends Factory
                     'Gia đình tôi có người theo đạo Hồi (Halal), xin lưu ý.',
                     'Cho mình xin phòng tầng cao, yên tĩnh nhé.',
                     'Không ăn được hành tỏi.',
-                    '', // Trường hợp khách không ghi chú gì
+                    '', // Empty note scenario
                 ])
             ]),
         ];

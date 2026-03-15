@@ -4,15 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\Customer;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         User::create([
@@ -35,7 +31,7 @@ class UserSeeder extends Seeder
 
         Customer::create([
             'user_id' => $customerUser->id,
-            'loyalty_tier_id' => 1, // Hạng Bronze
+            'loyalty_tier_id' => 1, // Bronze Tier default
             'full_name' => 'Nguyễn Khách Thử Nghiệm',
             'phone' => '0988776655',
             'email' => 'customer@gmail.com',

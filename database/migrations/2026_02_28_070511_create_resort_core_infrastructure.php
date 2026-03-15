@@ -35,7 +35,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 4. Customers (Đã nâng cấp V2: full_name, loyalty, ai_preferences)
+        // 4. Customers
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');

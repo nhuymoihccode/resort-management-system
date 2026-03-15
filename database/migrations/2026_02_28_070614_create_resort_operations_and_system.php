@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up() {
-        // 1. Orders (Đã nâng cấp V2: Payment Status & AI Compensation)
+        // 1. Orders
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 2. Order_Service, Bills (V2: Transaction ID)
+        // 2. Order_Service, Bills
         Schema::create('order_service', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
@@ -43,7 +43,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // 3. System: Reviews (AI Sentiment), Audit Logs, Settings
+        // 3. System: Reviews, Audit Logs, Settings
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');

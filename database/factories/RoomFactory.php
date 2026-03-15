@@ -4,29 +4,21 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Room>
- */
 class RoomFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $type = fake()->randomElement(['standard', 'suite', 'villa', 'bungalow']);
         
-        // Random từ 1 đến 4, tương ứng với 4 Zone bạn đã tạo trong DB
+        // Map to 4 pre-defined Zones in the database
         $zoneId = fake()->numberBetween(1, 4); 
 
-        // Gán View chi tiết dựa trên Zone để logic khớp với thực tế
+        // Realistic view mapping based on assigned Zone
         $view = match($zoneId) {
-            1 => fake()->randomElement(['Trực diện biển', 'Góc nhìn biển', 'Hướng hồ bơi vô cực']), // Khu Biển
-            2 => fake()->randomElement(['Hướng vườn cây nhiệt đới', 'Hướng lối đi nội bộ']),      // Khu Vườn
-            3 => fake()->randomElement(['Trực diện hồ bơi', 'Góc hồ bơi riêng']),                 // Khu Bể Bơi
-            4 => fake()->randomElement(['Hướng sảnh chính', 'Hướng đồi']),                        // Khu Trung Tâm
+            1 => fake()->randomElement(['Trực diện biển', 'Góc nhìn biển', 'Hướng hồ bơi vô cực']), // Ocean Zone
+            2 => fake()->randomElement(['Hướng vườn cây nhiệt đới', 'Hướng lối đi nội bộ']),      // Garden Zone
+            3 => fake()->randomElement(['Trực diện hồ bơi', 'Góc hồ bơi riêng']),                 // Pool Zone
+            4 => fake()->randomElement(['Hướng sảnh chính', 'Hướng đồi']),                        // Central Zone
         };
 
         $price = match($type) {
@@ -43,7 +35,7 @@ class RoomFactory extends Factory
             'price' => $price,
             'capacity_adults' => fake()->numberBetween(2, 4), 
             'capacity_children' => fake()->numberBetween(0, 2), 
-            'view' => $view, // View giờ đã logic với Zone
+            'view' => $view,
             'area' => fake()->numberBetween(40, 150), 
             'status' => fake()->randomElement(['available', 'occupied', 'cleaning', 'maintenance']),
         ];
