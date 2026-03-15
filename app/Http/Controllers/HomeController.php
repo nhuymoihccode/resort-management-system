@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Room;
 use App\Models\Service;
-use App\Models\Promotion;
-use App\Models\Review;
 
 class HomeController extends Controller
 {
@@ -14,14 +12,16 @@ class HomeController extends Controller
     {
         $featuredRooms = Room::with('zone')->where('status', 'available')->inRandomOrder()->take(6)->get();
         $services = Service::all();
-        $promotions = Promotion::where('end_date', '>=', now())->get();
-        $reviews = Review::with('customer')->where('rating', '>=', 4)->inRandomOrder()->take(6)->get();
+        
+        $promotions = collect();
+        $reviews = collect();
 
         $totalRooms = Room::count();
         $totalServices = Service::count();
-        return view('welcome', compact('featuredRooms', 'services', 'promotions', 'reviews', 'totalRooms', 'totalServices'));
         
+        return view('welcome', compact('featuredRooms', 'services', 'promotions', 'reviews', 'totalRooms', 'totalServices'));
     }
+
     public function rooms()
     {
         $rooms = Room::with('zone')->where('status', 'available')->paginate(9);
