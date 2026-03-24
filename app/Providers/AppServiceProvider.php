@@ -28,28 +28,29 @@ class AppServiceProvider extends ServiceProvider
                 && strtolower($config['encryption']) === 'ssl';
 
             $transport = new EsmtpTransport(
-                $config['host']      ?? 'smtp.gmail.com',
+                $config['host'] ?? 'smtp.gmail.com',
                 (int) ($config['port'] ?? 587),
                 $isSsl
             );
 
-            if (! empty($config['username'])) {
+            if (!empty($config['username'])) {
                 $transport->setUsername($config['username']);
             }
-            if (! empty($config['password'])) {
+            if (!empty($config['password'])) {
                 $transport->setPassword($config['password']);
             }
-            if (! empty($config['timeout'])) {
+            if (!empty($config['timeout'])) {
                 $transport->setRestartThreshold(
-                    100, (int) $config['timeout']
+                    100,
+                    (int) $config['timeout']
                 );
             }
 
             // Tắt verify SSL — chỉ dùng trên local/dev
             $transport->getStream()->setStreamOptions([
                 'ssl' => [
-                    'verify_peer'       => false,
-                    'verify_peer_name'  => false,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
                     'allow_self_signed' => true,
                 ],
             ]);

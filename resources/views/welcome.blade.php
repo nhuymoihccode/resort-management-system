@@ -25,7 +25,7 @@
 
 {{-- SEARCH BAR --}}
 <section id="search-bar" class="relative z-20 max-w-4xl mx-auto px-4 sm:px-6 -mt-16 mb-20">
-    <form action="{{ route('booking.check') }}" method="POST" class="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row overflow-hidden transition-colors duration-300">
+    <form action="{{ route('rooms.search') }}" method="POST" class="bg-white dark:bg-slate-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row overflow-hidden transition-colors duration-300">
         @csrf
         <div class="flex-1 px-6 py-5 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700">
             <label for="check_in" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Nhận phòng</label>

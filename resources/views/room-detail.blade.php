@@ -75,6 +75,24 @@
     html.dark .date-input::-webkit-calendar-picker-indicator:hover { background: rgba(255,255,255,0.1); }
 </style>
 
+{{-- Flash messages từ redirect (lỗi conflict phòng, hoặc thông báo cần login) --}}
+@if(session('error'))
+<div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 px-6 py-4 text-sm text-red-700 dark:text-red-400 font-medium">
+    <div class="max-w-7xl mx-auto flex items-center gap-3">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        {{ session('error') }}
+    </div>
+</div>
+@endif
+@if(session('info'))
+<div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 px-6 py-4 text-sm text-blue-700 dark:text-blue-400 font-medium">
+    <div class="max-w-7xl mx-auto flex items-center gap-3">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ session('info') }}
+    </div>
+</div>
+@endif
+
 <div class="room-detail-bg min-h-screen transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div class="flex flex-col lg:flex-row gap-10 xl:gap-16">
@@ -201,7 +219,7 @@
                         </div>
 
                         <div class="px-6 py-5 space-y-4">
-                            <form action="{{ route('booking.check') }}" method="POST">
+                            <form action="{{ route('booking.checkout') }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="preferred_room_id" value="{{ $room->id }}">
 
