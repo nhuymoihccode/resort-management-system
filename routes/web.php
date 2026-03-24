@@ -19,6 +19,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/rooms', [HomeController::class, 'rooms'])->name('rooms.index');
 Route::get('/rooms/{id}', [HomeController::class, 'showRoom'])->name('rooms.show');
 
+// Checkout: tạo soft lock → hiện trang chọn dịch vụ
+Route::post('/booking/checkout', [HomeController::class, 'checkout'])->name('booking.checkout');
+
+// Sau khi login, Breeze redirect về đây → tiếp tục checkout
+Route::get('/booking/resume', [HomeController::class, 'resumeAfterLogin'])
+    ->middleware('auth')
+    ->name('booking.resume');
+
 // MoMo IPN webhook (ngoài CSRF, ngoài auth)
 Route::post('/momo/ipn', [MomoController::class, 'ipn'])->name('momo.ipn');
 
@@ -26,8 +34,12 @@ Route::middleware(['auth'])->group(function () {
     // Trang quản lý cá nhân của khách
     Route::get('/dashboard', [CustomerDashboard::class, 'index'])->name('dashboard');
     
+    // Booking flow
+    Route::post('/booking/store',              [BookingController::class, 'store'])->name('booking.store');
     Route::get('/booking/{order}/payment',     [BookingController::class, 'showPayment'])->name('booking.payment');
     Route::get('/booking/{order}/status',      [BookingController::class, 'pollStatus'])->name('booking.status');
+    Route::post('/booking/{order}/cancel',     [BookingController::class, 'cancel'])->name('booking.cancel');
+    Route::get('/booking/{order}/cancel-holding', [BookingController::class, 'cancelHolding'])->name('booking.cancel-holding');
     Route::post('/booking/{order}/refresh-qr',     [BookingController::class, 'refreshQr'])->name('booking.refresh-qr');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
