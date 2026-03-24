@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\MomoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboard;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
@@ -18,14 +19,16 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/rooms', [HomeController::class, 'rooms'])->name('rooms.index');
 Route::get('/rooms/{id}', [HomeController::class, 'showRoom'])->name('rooms.show');
 
-/*2. LUỒNG ĐẶT PHÒNG & KHÁCH HÀNG (CUSTOMER) - Bắt buộc đăng nhập*/
+// MoMo IPN webhook (ngoài CSRF, ngoài auth)
+Route::post('/momo/ipn', [MomoController::class, 'ipn'])->name('momo.ipn');
+
 Route::middleware(['auth'])->group(function () {
     // Trang quản lý cá nhân của khách
     Route::get('/dashboard', [CustomerDashboard::class, 'index'])->name('dashboard');
     
-    // Luồng booking (Tìm phòng -> Chọn -> Thanh toán)
-    Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.check');
-    Route::post('/booking/store', [BookingController::class, 'store'])->name('booking.store');
+    Route::get('/booking/{order}/payment',     [BookingController::class, 'showPayment'])->name('booking.payment');
+    Route::get('/booking/{order}/status',      [BookingController::class, 'pollStatus'])->name('booking.status');
+    Route::post('/booking/{order}/refresh-qr',     [BookingController::class, 'refreshQr'])->name('booking.refresh-qr');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -43,6 +46,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
         'promotions' => PromotionController::class,
         'orders'     => OrderController::class,
     ]);
+
+    Route::post('/booking/{order}/confirm-payment',
+        [BookingController::class, 'confirmPayment']
+    )->name('booking.confirm-payment');
 });
 
 require __DIR__.'/auth.php';
