@@ -189,13 +189,16 @@ class BookingController extends Controller
         if ($order->user_id !== Auth::id())
             abort(403);
 
+        // Load slug trước khi xóa (sau delete mất relation)
+        $roomSlug = $order->room->slug;
+
         // Chỉ xóa nếu vẫn còn trạng thái holding
         if ($order->status === 'holding') {
             $order->delete();
         }
 
-        // Redirect về room_detail để khách chọn lại ngày
-        return redirect()->route('rooms.show', $order->room_id)
+        // Redirect về room_detail — dùng slug, không dùng id
+        return redirect()->route('rooms.show', $roomSlug)
             ->with('info', 'Vui lòng chọn ngày mới.');
     }
 

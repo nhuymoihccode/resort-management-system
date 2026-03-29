@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -34,7 +35,27 @@ class Order extends Model
         'canceled_at' => 'datetime',
     ];
 
-    // ── Relationships ─────────────────────────────────────────────
+    // ── UUID auto-generate ────────────────────────────────────────────────────
+
+    protected static function booted(): void
+    {
+        static::creating(function (Order $order) {
+            if (empty($order->uuid)) {
+                $order->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Route Model Binding dùng uuid thay id.
+     * /booking/{order} → Laravel tự tìm theo uuid, không phải id số.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    // ── Relationships ─────────────────────────────────────────────────────────
 
     public function customer()
     {
