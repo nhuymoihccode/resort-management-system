@@ -25,16 +25,103 @@ class HomeController extends Controller
         return view('welcome', compact('featuredRooms', 'services', 'promotions', 'reviews', 'totalRooms', 'totalServices'));
     }
 
-    public function rooms()
+    // ─────────────────────────────────────────────────────────────
+    // GET /rooms — danh sách phòng với filter & availability
+    // ─────────────────────────────────────────────────────────────
+    public function rooms(Request $request)
     {
-        $rooms = Room::with('zone')->where('status', 'available')->paginate(9);
-        return view('rooms', compact('rooms'));
+        // ✨ VALIDATE: chỉ validate filter params (date đã lưu session, không nhận từ URL)
+        $request->validate([
+            'type'      => 'nullable|in:standard,suite,villa,bungalow',
+            'min_price' => 'nullable|numeric|min:0',
+            'max_price' => 'nullable|numeric|min:0',
+            'capacity'  => 'nullable|numeric|min:1',
+        ]);
+
+        // Ngày luôn đọc từ session — không cho phép truyền qua URL
+        // Lý do: tránh lộ thông tin và tránh user giả mạo ngày qua URL
+        $checkIn  = session('search_check_in');
+        $checkOut = session('search_check_out');
+        
+        // Filter từ form filter bar
+        $type     = $request->input('type');
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
+        $capacity = $request->input('capacity');
+
+        // Build query
+        $query = Room::with('zone')->where('status', 'available');
+
+        // Filter theo loại
+        if ($type && in_array($type, ['standard', 'suite', 'villa', 'bungalow'])) {
+            $query->where('type', $type);
+        }
+
+        // Filter theo giá
+        if ($minPrice) {
+            $query->where('price', '>=', intval($minPrice));
+        }
+        if ($maxPrice) {
+            $query->where('price', '<=', intval($maxPrice));
+        }
+
+        // Filter theo sức chứa
+        if ($capacity) {
+            $query->where('capacity_adults', '>=', intval($capacity));
+        }
+
+        // ══ AVAILABILITY CHECK (OPTIMIZED) ══
+        // Nếu có check_in/out, chỉ hiển thị phòng còn trống trong khoảng đó
+        // 🚀 FIX: Dùng subquery thay vì pluck()->unique() (tránh load 10k+ rows vào memory)
+        if ($checkIn && $checkOut) {
+            $checkInDate  = Carbon::parse($checkIn)->startOfDay();
+            $checkOutDate = Carbon::parse($checkOut)->startOfDay();
+
+            // Subquery: Lấy room_id bị conflict mà không load toàn bộ data
+            $unavailableSubquery = Order::select('room_id')
+                ->where(function ($q) use ($checkInDate, $checkOutDate) {
+                    $q->whereNotIn('status', ['cancelled', 'checked_out'])
+                      ->where('check_in', '<', $checkOutDate)
+                      ->where('check_out', '>', $checkInDate)
+                      ->where(function ($subQ) {
+                          $subQ->whereNull('expires_at')
+                                ->orWhere('expires_at', '>', now());
+                      });
+                })
+                ->distinct();
+
+            // Loại bỏ những phòng bị conflict khỏi query (subquery hiệu quả hơn)
+            $query->whereNotIn('id', $unavailableSubquery);
+        }
+
+        // ✨ FIX: withQueryString() giữ lại các tham số filter khi chuyển trang
+        // ⚠️ IMPORTANT: withQueryString() phải SAU paginate(), không SAI vào Builder
+        $rooms = $query->paginate(9)->withQueryString();
+
+        // Gửi về view để hiển thị filter bar
+        return view('rooms', compact(
+            'rooms', 
+            'checkIn', 
+            'checkOut', 
+            'type', 
+            'minPrice', 
+            'maxPrice', 
+            'capacity'
+        ));
     }
 
-    public function showRoom($id)
+    /**
+     * Route Model Binding: Laravel tự tìm Room theo slug nhờ getRouteKeyName().
+     * Tên tham số $room phải khớp với {room} trong web.php.
+     */
+    public function showRoom(Room $room)
     {
-        $room = Room::with('zone')->findOrFail($id);
-        return view('room-detail', compact('room'));
+        $room->loadMissing('zone');
+
+        $checkIn  = session('search_check_in');
+        $checkOut = session('search_check_out');
+
+        return view('room-detail', compact('room', 'checkIn', 'checkOut'));
     }
 
     // POST /rooms/search — search bar trang welcome
@@ -44,8 +131,15 @@ class HomeController extends Controller
             'check_in'  => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
         ]);
-        session(['search_check_in' => $request->check_in, 'search_check_out' => $request->check_out]);
-        return redirect()->route('rooms.index', ['check_in' => $request->check_in, 'check_out' => $request->check_out]);
+        
+        // Lưu vào session — KHÔNG đưa lên URL để tránh lộ ngày
+        session([
+            'search_check_in'  => $request->check_in,
+            'search_check_out' => $request->check_out,
+        ]);
+
+        // Redirect sạch, không kèm params
+        return redirect()->route('rooms.index');
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -135,7 +229,7 @@ class HomeController extends Controller
 
             if ($conflict) {
                 DB::rollBack();
-                return redirect()->route('rooms.show', $room->id)
+                return redirect()->route('rooms.show', $room->slug)
                     ->with('error', 'Rất tiếc, phòng đang được giữ hoặc đã đặt trong khoảng thời gian này. Vui lòng chọn ngày khác hoặc thử lại sau ít phút.');
             }
 
@@ -184,7 +278,7 @@ class HomeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Checkout soft lock error: ' . $e->getMessage());
-            return redirect()->route('rooms.show', $room->id)
+            return redirect()->route('rooms.show', $room->slug)
                 ->with('error', 'Có lỗi xảy ra, vui lòng thử lại.');
         }
     }

@@ -248,27 +248,28 @@
                                 </button>
                             </form>
 
-                            <div class="space-y-2 pt-1">
-                                @foreach(['Miễn phí hủy trong 48 giờ đầu' => 'M5 13l4 4L19 7', 'Xác nhận tức thì qua email' => 'M5 13l4 4L19 7', 'Không thu phí ẩn' => 'M5 13l4 4L19 7'] as $trustText => $icon)
-                                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}"/></svg>
-                                    {{ $trustText }}
-                                </div>
-                                @endforeach
-                            </div>
-                            <div class="pt-2 border-t border-slate-100 dark:border-slate-700/50 text-center">
-                                <p class="text-sm text-slate-500">Cần tư vấn? <a href="tel:+84123456789" class="text-amber-600 hover:text-amber-500 font-semibold">Gọi hotline ngay</a></p>
+                            {{-- Info: Nếu không có date, hiện message --}}
+                            <div id="noDateMessage" class="mt-4 p-4 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-center">
+                                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                                    Chưa chọn ngày?
+                                </p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 mb-3">
+                                    Quay lại trang chủ để chọn ngày nhận &amp; trả phòng
+                                </p>
+                                <a href="{{ route('home') }}" class="inline-block text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                                    ← Chọn ngày
+                                </a>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="mt-4 flex items-center justify-center gap-3 text-sm text-slate-400 dark:text-slate-500">
-                        <div class="flex">
-                            @for($i=0;$i<5;$i++)
-                            <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            @endfor
+                        <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-center gap-2 text-center">
+                            <div class="flex text-amber-400">
+                                @for($i=0;$i<5;$i++)
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                @endfor
+                            </div>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">4.9 · 128 đánh giá</span>
                         </div>
-                        <span>4.9 · 128 đánh giá</span>
                     </div>
                 </div>
             </div>
@@ -297,6 +298,7 @@
     var checkinDisplay  = document.getElementById('checkinDateDisplay');
     var checkoutDisplay = document.getElementById('checkoutDateDisplay');
     var durationBadge   = document.getElementById('durationBadge');
+    var noDateMessage   = document.getElementById('noDateMessage');
 
     var DAYS_VI   = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
     var MONTHS_VI = ['tháng 1','tháng 2','tháng 3','tháng 4','tháng 5','tháng 6', 'tháng 7','tháng 8','tháng 9','tháng 10','tháng 11','tháng 12'];
@@ -318,22 +320,19 @@
         } catch(e){}
     }
 
-    function restoreDates(){
-        try {
-            var saved = sessionStorage.getItem(SS_KEY);
-            if(!saved) return;
-            var data = JSON.parse(saved);
-            var today = todayISO();
-            if(data.check_in && data.check_in >= today) ci.value = data.check_in;
-            if(data.check_out && data.check_out > (ci.value || today)) co.value = data.check_out;
-            sessionStorage.removeItem(SS_KEY);
-            refreshPreview();
-        } catch(e){}
-    }
+    // ══ NEW: Restore dates từ Props (Session) ══
+    function restoreDatesFromProps(){
+        var propsCheckIn  = '{{ $checkIn ?? "" }}';
+        var propsCheckOut = '{{ $checkOut ?? "" }}';
+        var today = todayISO();
 
-    document.querySelectorAll('a[href*="login"]').forEach(function(link){
-        link.addEventListener('click', saveDates);
-    });
+        if(propsCheckIn && propsCheckIn >= today) ci.value = propsCheckIn;
+        if(propsCheckOut && propsCheckOut > (ci.value || today)) co.value = propsCheckOut;
+        
+        if(ci.value && co.value) {
+            refreshPreview();
+        }
+    }
 
     function refreshPreview(){
         if(!ci||!co) return;
@@ -350,10 +349,12 @@
             durationBadge.textContent   = n+' đêm · '+(n+1)+' ngày';
             placeholder.classList.add('hidden');
             filled.classList.remove('hidden');
+            noDateMessage.classList.add('hidden');
         } else {
             summary.classList.add('hidden');
             placeholder.classList.remove('hidden');
             filled.classList.add('hidden');
+            noDateMessage.classList.remove('hidden');
         }
     }
 
@@ -371,7 +372,8 @@
         });
     });
 
-    restoreDates();
+    // ══ Restore dates từ session props (thay vì sessionStorage) ══
+    restoreDatesFromProps();
 })();
 </script>
 

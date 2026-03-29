@@ -14,9 +14,15 @@ use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\OrderController;
 
 // ── 1. PUBLIC ────────────────────────────────────────────────────
+// Redirect 301: /rooms/5 → /rooms/phong-101 | /booking/42/... → /booking/uuid/.../
+Route::middleware([\App\Http\Middleware\RedirectLegacyUrls::class])->group(function () {
+    Route::get('/rooms/{id}',          fn() => abort(404))->where('id', '[0-9]+');
+    Route::get('/booking/{id}/{any}',  fn() => abort(404))->where('id', '[0-9]+')->where('any', '.*');
+});
+
 Route::get('/',           [HomeController::class, 'index'])->name('home');
 Route::get('/rooms',      [HomeController::class, 'rooms'])->name('rooms.index');
-Route::get('/rooms/{id}', [HomeController::class, 'showRoom'])->name('rooms.show');
+Route::get('/rooms/{room}', [HomeController::class, 'showRoom'])->name('rooms.show');
 
 // Search bar trang welcome
 Route::post('/rooms/search', [HomeController::class, 'searchByDate'])->name('rooms.search');
