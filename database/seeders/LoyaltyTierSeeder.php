@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\LoyaltyTier;
+use DB;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,7 +11,9 @@ class LoyaltyTierSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         LoyaltyTier::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $tiers = [
             [

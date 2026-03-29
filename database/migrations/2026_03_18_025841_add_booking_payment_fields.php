@@ -5,11 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Migration này thay thế toàn bộ các lệnh tinker ALTER TABLE đã chạy thủ công.
- * Bao gồm: booking payment fields, holding status, phone nullable.
- * Sau migrate:fresh --seed sẽ không cần chạy tinker thêm gì nữa.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -62,26 +57,18 @@ return new class extends Migration
             }
         });
 
-        // ── 3. users: phone nullable (thay cho migration riêng) ─────────────
-        Schema::table('users', function (Blueprint $table) {
-            // Dùng DB::statement vì change() cần doctrine/dbal
-        });
-        DB::statement("
-            ALTER TABLE users
-            MODIFY COLUMN phone VARCHAR(255) NULL
-        ");
+        // ── 3. users: phone nullable ─────────────────────────────────────────
+        DB::statement("ALTER TABLE users MODIFY COLUMN phone VARCHAR(255) NULL");
     }
 
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(array_filter([
-                Schema::hasColumn('orders', 'deposit_amount') ? 'deposit_amount' : null,
-                Schema::hasColumn('orders', 'transfer_code')  ? 'transfer_code'  : null,
-                Schema::hasColumn('orders', 'note')           ? 'note'           : null,
-                Schema::hasColumn('orders', 'expires_at')     ? 'expires_at'     : null,
-            ]));
-        });
+        // ── orders: xóa từng cột an toàn ────────────────────────────────────
+        foreach (['deposit_amount', 'transfer_code', 'note', 'expires_at'] as $col) {
+            if (Schema::hasColumn('orders', $col)) {
+                Schema::table('orders', fn($t) => $t->dropColumn($col));
+            }
+        }
 
         DB::statement("
             ALTER TABLE orders
@@ -90,24 +77,37 @@ return new class extends Migration
             DEFAULT 'pending'
         ");
 
-        Schema::table('bills', function (Blueprint $table) {
-            $table->dropColumn(array_filter([
-                Schema::hasColumn('bills', 'qr_image_url')    ? 'qr_image_url'    : null,
-                Schema::hasColumn('bills', 'bank_payload')    ? 'bank_payload'    : null,
-                Schema::hasColumn('bills', 'confirm_status')  ? 'confirm_status'  : null,
-                Schema::hasColumn('bills', 'confirmed_at')    ? 'confirmed_at'    : null,
-                Schema::hasColumn('bills', 'confirmed_by')    ? 'confirmed_by'    : null,
-            ]));
-        });
+        // ── bills: drop foreign key bằng raw SQL IF EXISTS ───────────────────
+        // Không dùng dropForeign() hay dropForeignIfExists() vì không tương thích
+        // mọi version Laravel — dùng MySQL information_schema để check an toàn
+        $fkExists = DB::selectOne("
+            SELECT COUNT(*) as cnt
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE CONSTRAINT_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'bills'
+            AND CONSTRAINT_NAME = 'bills_confirmed_by_foreign'
+            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+        ");
+
+        if ($fkExists && $fkExists->cnt > 0) {
+            DB::statement("ALTER TABLE bills DROP FOREIGN KEY bills_confirmed_by_foreign");
+        }
+
+        // Xóa từng cột bills an toàn
+        foreach (['confirmed_by', 'confirmed_at', 'confirm_status', 'bank_payload', 'qr_image_url'] as $col) {
+            if (Schema::hasColumn('bills', $col)) {
+                Schema::table('bills', fn($t) => $t->dropColumn($col));
+            }
+        }
 
         DB::statement("
             ALTER TABLE bills
             MODIFY COLUMN payment_method ENUM('cash','card','transfer') DEFAULT 'cash'
         ");
 
-        DB::statement("
-            ALTER TABLE users
-            MODIFY COLUMN phone VARCHAR(255) NOT NULL
-        ");
+        // ── users: phone → NOT NULL ──────────────────────────────────────────
+        // Dùng CONCAT('unknown-', id) để tránh lỗi unique constraint
+        DB::statement("UPDATE users SET phone = CONCAT('unknown-', id) WHERE phone IS NULL");
+        DB::statement("ALTER TABLE users MODIFY COLUMN phone VARCHAR(255) NOT NULL");
     }
 };
